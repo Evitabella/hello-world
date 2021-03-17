@@ -1,62 +1,21 @@
-pipeline{
-    agent {
-        node {
-            label 'my-defined-label'
-        }
-
-        dockerfile {
-            filename 'Dockerfile'
-            label 'workers'
-        }
-
-        kubernetes {
-            label 'workers'
-            yaml """
-            kind: Pod
-            metadata:
-            name: jenkins-worker
-            spec:
-            containers:
-            - name: nodejs
-              image: node:lts
-              tty: true
-              restartPolicy: Never
-            """
-        }
-    }
-
-    environment {
-        REGISTRY_CREDENTIALS= credentials('DOCKER_REGISTRY')
-        REGISTRY_URL = 'https://registry.domain.com'
-    }
+pipeline {
+    agent any
 
     stages {
-        stage('Test'){
+        stage('Build') {
             steps {
-                sh 'npm run test'
-                sh 'npm run coverage'
+                echo 'Building..'
             }
         }
-
-        stage('Build'){
-            
-        }
-        stage('Push'){
-            steps{
-                sh 'docker login $REGISTRY_URL --username $REGISTRY_CREDENTIALS_USR --password $REGISTRY_CREDENTIALS_PSW'
+        stage('Test') {
+            steps {
+                echo 'Testing..'
             }
         }
-    }
-
-    post {
-        always {
-            echo 'Cleaning up workspace'
-        }
-        success {
-            slackSend (color: 'GREEN', message: "${env.JOB_NAME} Successful build")
-        }
-        failure {
-           slackSend (color: 'RED', message: "${env.JOB_NAME} Failed build")
+        stage('Deploy') {
+            steps {
+                echo 'Deploying....'
+            }
         }
     }
 }
